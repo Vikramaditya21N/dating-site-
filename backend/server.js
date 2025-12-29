@@ -8,17 +8,27 @@ const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
-// Use an array for origins to keep it clean
+// 1. DYNAMIC CORS CONFIGURATION
 const allowedOrigins = [
     "http://localhost:5173", 
-    "https://dating-site-topaz.vercel.app" // Your live production link
+    "https://dating-site-topaz.vercel.app"
 ];
 
-// 1. MIDDLEWARE
 app.use(cors({
-    origin: allowedOrigins,
-    credentials: true
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
 app.use(express.json());
 
 // 2. ROUTES
@@ -34,9 +44,12 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
+
+
 
 app.set('socketio', io);
 
@@ -71,8 +84,8 @@ io.on('connection', (socket) => {
 });
 
 // 5. START SERVER
+// Render uses the PORT environment variable (usually 10000)
 const PORT = process.env.PORT || 5000;
-// Note: We use 0.0.0.0 to ensure Render can bind to the port correctly
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT} 🚀`);
 });
