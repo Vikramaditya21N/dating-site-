@@ -14,7 +14,7 @@ const app = express();
 
 // 1. MIDDLEWARE
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "https://dating-site-jdhw65jby-vikramaditya21ns-projects.vercel.app/"],
     credentials: true
 }));
 app.use(express.json());
