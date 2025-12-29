@@ -16,11 +16,19 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function (origin, callback) {
+        // Log the origin to Render dashboard so we can see what is being blocked
+        console.log("Incoming request from origin:", origin);
+
         // Allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1) {
+
+        // Check if origin is in our list OR is any vercel.app subdomain
+        const isAllowed = allowedOrigins.includes(origin) || origin.endsWith(".vercel.app");
+
+        if (isAllowed) {
             callback(null, true);
         } else {
+            console.error("CORS Blocked for origin:", origin);
             callback(new Error('Not allowed by CORS'));
         }
     },
@@ -43,7 +51,13 @@ mongoose.connect(process.env.MONGO_URI)
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -83,8 +97,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// 5. START SERVER
-// Render uses the PORT environment variable (usually 10000)
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT} 🚀`);
