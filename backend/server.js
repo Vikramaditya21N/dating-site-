@@ -11,7 +11,7 @@ const app = express();
 // Use an array for origins to keep it clean
 const allowedOrigins = [
     "http://localhost:5173", 
-    "https://dating-site-topaz.vercel.app" // Your NEW production link
+    "https://dating-site-topaz.vercel.app" // Your live production link
 ];
 
 // 1. MIDDLEWARE
@@ -33,7 +33,7 @@ mongoose.connect(process.env.MONGO_URI)
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins, // Updated to use the new links
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });
@@ -70,6 +70,9 @@ io.on('connection', (socket) => {
   });
 });
 
-// Use Render's dynamic port or default to 5000
+// 5. START SERVER
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT} 🚀`));
+// Note: We use 0.0.0.0 to ensure Render can bind to the port correctly
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT} 🚀`);
+});
